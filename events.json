@@ -1,20 +1,5 @@
 [
   {
-    "name": "병오년 해맞이 행사",
-    "region": "강릉",
-    "type": "축제",
-    "startDate": "20251231",
-    "endDate": "20260101",
-    "date": "2025.12.31 ~ 2026.01.01",
-    "place": "",
-    "addr": "강원특별자치도 강릉시 경포로 515 (안현동)",
-    "price": "",
-    "img": "http://tong.visitkorea.or.kr/cms/resource/40/3588540_image2_1.jpg",
-    "desc": "",
-    "phone": "033-640-5130",
-    "contentId": "674023"
-  },
-  {
     "name": "홍천강 꽁꽁축제",
     "region": "홍천",
     "type": "축제",
