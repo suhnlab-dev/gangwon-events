@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Fetch KTO events
         env:
@@ -23,20 +23,23 @@ jobs:
           python - <<'PY'
           import os
           import json
-          import urllib.parse
           import urllib.request
-          import xml.etree.ElementTree as ET
+          import urllib.parse
           from datetime import datetime, timedelta
 
           key = os.environ["KTO_API_KEY"]
 
-          url = "https://apis.data.go.kr/B551011/KorService2/searchFestival2"
+          if not key:
+              raise RuntimeError("KTO_API_KEY Secret이 없습니다.")
+
+          base_url = "https://apis.data.go.kr/B551011/KorService2/searchFestival2"
 
           start = datetime.now().strftime("%Y%m%d")
           end = (datetime.now() + timedelta(days=365)).strftime("%Y%m%d")
 
-          params = {
-              "serviceKey": key,
+          # 일반 인증키가 이미 URL 인코딩되어 있는 경우
+          # serviceKey만 다시 인코딩하지 않도록 처리
+          other_params = {
               "MobileOS": "ETC",
               "MobileApp": "GangwonEvents",
               "_type": "json",
@@ -47,67 +50,118 @@ jobs:
               "eventEndDate": end
           }
 
-          request_url = url + "?" + urllib.parse.urlencode(params)
+          query = urllib.parse.urlencode(other_params)
 
-          try:
-              raw = urllib.request.urlopen(
-                  request_url,
-                  timeout=30
-              ).read()
-
-              try:
-                  obj = json.loads(raw.decode("utf-8"))
-
-                  items = (
-                      obj.get("response", {})
-                         .get("body", {})
-                         .get("items", {})
-                         .get("item", [])
+          if "%" in key:
+              request_url = (
+                  base_url
+                  + "?serviceKey="
+                  + key
+                  + "&"
+                  + query
+              )
+          else:
+              request_url = (
+                  base_url
+                  + "?"
+                  + urllib.parse.urlencode(
+                      {"serviceKey": key}
                   )
+                  + "&"
+                  + query
+              )
 
-                  if isinstance(items, dict):
-                      items = [items]
+          print("API 요청 시작")
+          print("기간:", start, "~", end)
+          print("지역코드: 32")
 
-              except Exception:
-                  root = ET.fromstring(raw)
-                  items = []
+          request = urllib.request.Request(
+              request_url,
+              headers={
+                  "User-Agent": "Mozilla/5.0"
+              }
+          )
 
-                  for item in root.findall(".//item"):
-                      items.append({
-                          child.tag: child.text or ""
-                          for child in item
-                      })
+          response = urllib.request.urlopen(
+              request,
+              timeout=60
+          )
 
-          except Exception as e:
-              print("API fetch failed:", e)
-              items = []
+          status = response.status
+          raw = response.read()
 
-          def pick(item, *names):
-              for name in names:
-                  if item.get(name):
-                      return item.get(name)
-              return ""
+          print("HTTP 상태:", status)
+          print("응답 길이:", len(raw))
+
+          text = raw.decode("utf-8-sig")
+
+          # API가 오류 메시지를 반환했을 경우
+          if not text.strip().startswith("{"):
+              print("API 원본 응답:")
+              print(text[:2000])
+              raise RuntimeError(
+                  "한국관광공사 API가 JSON이 아닌 응답을 반환했습니다."
+              )
+
+          data = json.loads(text)
+
+          response_data = data.get("response", {})
+          header = response_data.get("header", {})
+
+          print("API 결과 코드:", header.get("resultCode"))
+          print("API 결과 메시지:", header.get("resultMsg"))
+
+          if header.get("resultCode") not in (None, "0000"):
+              raise RuntimeError(
+                  "API 오류: "
+                  + str(header)
+              )
+
+          body = response_data.get("body", {})
+          items = body.get("items", {}).get("item", [])
+
+          if isinstance(items, dict):
+              items = [items]
+
+          print("가져온 원본 행사 수:", len(items))
 
           events = []
 
+          def pick(item, *names):
+              for name in names:
+                  value = item.get(name)
+                  if value:
+                      return value
+              return ""
+
           for item in items:
 
-              start_date = pick(item, "eventstartdate")
-              end_date = pick(item, "eventenddate")
+              start_date = pick(
+                  item,
+                  "eventstartdate"
+              )
+
+              end_date = pick(
+                  item,
+                  "eventenddate"
+              )
 
               if not start_date:
                   continue
 
-              address = pick(item, "addr1")
+              address = pick(
+                  item,
+                  "addr1"
+              )
 
               region = ""
 
               if address:
-                  address = address.replace(
+                  clean_address = address.replace(
                       "강원특별자치도 ",
                       ""
                   )
-                  region = address.split()[0]
+                  region = clean_address.split()[0]
 
               event = {
                   "name": pick(item, "title"),
@@ -115,8 +169,7 @@ jobs:
                   "type": "축제",
                   "startDate": start_date,
                   "endDate": end_date,
-
-                  "date":
+                  "date": (
                       f"{start_date[:4]}."
                       f"{start_date[4:6]}."
                       f"{start_date[6:]}"
@@ -127,28 +180,27 @@ jobs:
                           f"{end_date[6:]}"
                           if end_date and end_date != start_date
                           else ""
-                      ),
-
-                  "place": pick(item, "eventplace"),
+                      )
+                  ),
+                  "place": pick(
+                      item,
+                      "eventplace"
+                  ),
                   "addr": address,
-
                   "price": pick(
                       item,
                       "usetimefestival",
                       "usetime"
                   ),
-
                   "img": pick(
                       item,
                       "firstimage",
                       "firstimage2"
                   ),
-
                   "desc": pick(
                       item,
                       "overview"
                   ),
-
                   "contentId": pick(
                       item,
                       "contentid"
@@ -163,14 +215,14 @@ jobs:
 
           for event in events:
 
-              key = (
+              unique_key = (
                   event["name"],
                   event["startDate"],
                   event["place"]
               )
 
-              if key not in seen:
-                  seen.add(key)
+              if unique_key not in seen:
+                  seen.add(unique_key)
                   clean.append(event)
 
           clean.sort(
@@ -184,19 +236,22 @@ jobs:
               "events.json",
               "w",
               encoding="utf-8"
-          ) as file:
+          ) as f:
 
               json.dump(
                   clean,
-                  file,
+                  f,
                   ensure_ascii=False,
                   indent=2
               )
 
-          print(
-              "강원 행사 수:",
-              len(clean)
-          )
+          print("최종 저장 행사 수:", len(clean))
+
+          if len(clean) == 0:
+              raise RuntimeError(
+                  "행사 데이터가 0건입니다. "
+                  "API 인증키 또는 API 응답을 확인하세요."
+              )
 
           PY
 
@@ -207,7 +262,9 @@ jobs:
 
           git add events.json
 
-          git diff --cached --quiet || \
+          if git diff --cached --quiet; then
+            echo "변경된 행사 데이터가 없습니다."
+          else
             git commit -m "Update Gangwon events"
-
-          git push
+            git push
+          fi
