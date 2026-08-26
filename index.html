@@ -1,112 +1,49 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>강원행사 V2</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>강원행사</title>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--text:#20242a;--muted:#707780;--line:#e6e8eb;--accent:#2f6fed;--soft:#edf3ff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif}
-button,input{font:inherit}.app{min-height:100vh}header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
-.header-inner{max-width:1080px;margin:auto;padding:15px 20px;display:flex;align-items:center;justify-content:space-between}
-.brand{font-weight:800;font-size:22px;letter-spacing:-.7px}.brand span{font-size:13px;color:var(--muted);font-weight:500;margin-left:8px}
-.login{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 13px;cursor:pointer}
-main{max-width:1080px;margin:auto;padding:28px 20px 90px}.hidden{display:none!important}
-.hero{padding:20px 0 24px}.hero h1{font-size:clamp(28px,5vw,42px);margin:0 0 9px;letter-spacing:-1.5px}.hero p{margin:0;color:var(--muted)}
-.search{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:7px;display:flex;box-shadow:0 5px 18px rgba(20,30,50,.05)}
-.search input{border:0;outline:0;flex:1;padding:12px 14px;background:transparent;min-width:0}.search button{border:0;background:var(--accent);color:white;border-radius:11px;padding:0 18px;cursor:pointer;font-weight:700}
-.section{margin-top:28px}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:13px}.section h2{font-size:20px;margin:0;letter-spacing:-.5px}.more{color:var(--muted);font-size:13px}
-.chips{display:flex;gap:8px;overflow:auto;padding-bottom:3px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 14px;cursor:pointer}.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}select{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;color:#444}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.event{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:.15s}.event:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(20,30,50,.08)}
-.thumb{height:150px;background:linear-gradient(135deg,#dbe7ff,#eef2f7);display:flex;align-items:center;justify-content:center;font-size:38px}.event-body{padding:15px}.tag{display:inline-block;font-size:12px;color:var(--accent);background:var(--soft);padding:5px 8px;border-radius:7px;margin-bottom:9px}.event h3{font-size:17px;margin:0 0 8px;letter-spacing:-.4px}.meta{font-size:13px;color:var(--muted);line-height:1.7}.event-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px}.heart{border:0;background:transparent;font-size:22px;cursor:pointer}
-.empty{display:none;padding:35px;text-align:center;background:#fff;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}
-.detail{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden}.detail-top{padding:14px 18px;border-bottom:1px solid var(--line)}.back{border:0;background:transparent;cursor:pointer;padding:7px 0;color:#555;font-weight:700}
-.detail-hero{height:280px;background:linear-gradient(135deg,#dbe7ff,#eef2f7);display:flex;align-items:center;justify-content:center;font-size:76px}
-.detail-content{padding:24px}.detail-tag{display:inline-block;color:var(--accent);background:var(--soft);padding:6px 9px;border-radius:8px;font-size:12px;font-weight:700}.detail h1{font-size:30px;letter-spacing:-1.2px;margin:12px 0 18px}.detail-info{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.info{background:#f8f9fb;border-radius:12px;padding:13px}.info b{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}.info span{font-size:15px}
-.actions{display:flex;gap:10px;margin:18px 0}.action{flex:1;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px;cursor:pointer;font-weight:700}.action.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.detail-section{border-top:1px solid var(--line);padding-top:22px;margin-top:22px}.detail-section h2{font-size:19px;margin:0 0 12px}.description{line-height:1.8;color:#4d535b}.comment-box{display:flex;gap:8px}.comment-box input{flex:1;border:1px solid var(--line);border-radius:10px;padding:11px;outline:0}.comment-box button{border:0;background:var(--accent);color:#fff;border-radius:10px;padding:0 15px;font-weight:700}.comments{margin-top:14px}.comment{padding:13px 0;border-bottom:1px solid #eee}.comment strong{font-size:14px}.comment p{margin:5px 0 0;color:#555;font-size:14px}
-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:20}.nav-inner{max-width:560px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr)}nav button{border:0;background:transparent;padding:11px 4px 10px;color:#777;cursor:pointer;font-size:12px}nav button b{display:block;font-size:20px;margin-bottom:3px}nav button.active{color:var(--accent);font-weight:700}
-@media(min-width:700px){nav{position:static;background:transparent;border:0;margin-top:-72px;pointer-events:none}.nav-inner{margin-left:auto;max-width:330px;pointer-events:auto}main{padding-bottom:40px}}
-@media(max-width:699px){.header-inner{padding:14px 16px}.header-inner .brand span{display:none}main{padding:20px 16px 86px}.grid{grid-template-columns:1fr}.thumb{height:145px}.hero{padding-top:10px}.detail-hero{height:220px}.detail-content{padding:20px}.detail h1{font-size:26px}.detail-info{grid-template-columns:1fr}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif}button,input,select{font:inherit}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}.head{max-width:1080px;margin:auto;padding:15px 20px;display:flex;justify-content:space-between;align-items:center}.brand{font-weight:800;font-size:22px}.brand small{font-size:12px;color:var(--muted);font-weight:500;margin-left:7px}.login{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 13px}
+main{max-width:1080px;margin:auto;padding:28px 20px 80px}.hero{padding:20px 0 24px}.hero h1{font-size:clamp(28px,5vw,42px);line-height:1.15;margin:0 0 9px;letter-spacing:-1.5px}.hero p{color:var(--muted);margin:0}.search{display:flex;margin-top:20px;background:#fff;border:1px solid var(--line);padding:7px;border-radius:16px}.search input{border:0;outline:0;flex:1;padding:12px;background:transparent}.search button{border:0;background:var(--accent);color:#fff;border-radius:11px;padding:0 18px;font-weight:700}
+.section{margin-top:25px}.headrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.headrow h2{font-size:20px;margin:0}.muted{color:var(--muted);font-size:13px}.chips{display:flex;gap:8px;overflow:auto;padding-bottom:4px}.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 14px}.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}.filters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}select{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer}.photo{height:160px;background:linear-gradient(135deg,#dbe7ff,#eef2f7);display:flex;align-items:center;justify-content:center;font-size:42px}.photo img{width:100%;height:100%;object-fit:cover}.body{padding:15px}.tag{display:inline-block;background:var(--soft);color:var(--accent);font-size:12px;padding:5px 8px;border-radius:7px}.card h3{font-size:17px;margin:9px 0 7px}.meta{font-size:13px;color:var(--muted);line-height:1.7}.empty{display:none;background:#fff;border:1px dashed var(--line);border-radius:16px;padding:35px;text-align:center;color:var(--muted)}
+.detail{display:none;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden}.back{border:0;background:transparent;padding:15px 18px;cursor:pointer;font-weight:700}.detailphoto{height:300px;background:#e9edf3;display:flex;align-items:center;justify-content:center;font-size:70px}.detailphoto img{width:100%;height:100%;object-fit:cover}.dc{padding:24px}.dc h1{font-size:30px;margin:12px 0 18px}.infos{display:grid;grid-template-columns:1fr 1fr;gap:10px}.info{background:#f8f9fb;border-radius:12px;padding:13px}.info b{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}.actions{display:flex;gap:9px;margin:18px 0}.action{flex:1;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px;font-weight:700}.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.desc{border-top:1px solid var(--line);padding-top:20px;line-height:1.8;color:#4d535b}.source{font-size:12px;color:#888;margin-top:22px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;z-index:6}nav div{width:min(560px,100%);display:grid;grid-template-columns:repeat(4,1fr)}nav button{border:0;background:transparent;padding:10px;color:#777;font-size:12px}nav b{display:block;font-size:19px;margin-bottom:2px}
+@media(max-width:699px){.head{padding:14px 16px}.brand small{display:none}main{padding:20px 16px 75px}.grid{grid-template-columns:1fr}.detailphoto{height:220px}.dc{padding:20px}.dc h1{font-size:26px}.infos{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="app">
-<header><div class="header-inner"><div class="brand">🏔️ 강원행사 <span>강원도의 축제와 행사</span></div><button class="login" onclick="alert('로그인은 다음 단계에서 연결할 수 있어요!')">로그인</button></div></header>
-
+<header><div class="head"><div class="brand">🏔️ 강원행사 <small>강원도의 축제와 행사</small></div><button class="login" onclick="alert('로그인은 다음 단계에서 연결할 수 있어요!')">로그인</button></div></header>
 <main>
-<section id="homeView">
-  <section class="hero"><h1>강원도에서<br>뭐 하지?</h1><p>우리 동네의 축제, 공연, 전시와 체험을 한눈에 찾아보세요.</p>
-    <div class="search"><input id="search" placeholder="행사 이름이나 장소를 검색해보세요"><button onclick="render()">검색</button></div>
-  </section>
-  <section class="section"><div class="section-head"><h2>📍 지역별로 찾기</h2><span class="more">18개 시·군</span></div><div class="chips" id="regions"></div></section>
-  <section class="section"><div class="section-head"><h2>📅 이번 주 행사</h2><span class="more" id="resultCount"></span></div>
-    <div class="filters"><select id="type" onchange="render()"><option>전체</option><option>축제</option><option>공연</option><option>전시</option><option>체험</option></select><select id="price" onchange="render()"><option>전체</option><option>무료</option></select></div>
-    <div class="grid" id="events"></div><div class="empty" id="empty">조건에 맞는 행사가 없어요.</div>
-  </section>
+<section id="listView">
+<div class="hero"><h1>강원도에서<br>뭐 하지?</h1><p>강원도의 축제, 공연, 전시와 행사를 한눈에 찾아보세요.</p>
+<div class="search"><input id="q" placeholder="행사 이름이나 장소를 검색해보세요" oninput="render()"><button onclick="render()">검색</button></div></div>
+<div class="section"><div class="headrow"><h2>📍 지역별로 찾기</h2><span class="muted">실시간 데이터</span></div><div class="chips" id="regions"></div></div>
+<div class="section"><div class="headrow"><h2>📅 강원 행사</h2><span class="muted" id="count"></span></div>
+<div class="filters"><select id="type" onchange="render()"><option>전체</option><option>축제</option><option>공연</option><option>전시</option><option>체험</option></select><select id="month" onchange="render()"><option value="all">전체 기간</option><option value="2026-08">2026년 8월</option><option value="2026-09">2026년 9월</option><option value="2026-10">2026년 10월</option></select></div>
+<div class="grid" id="grid"></div><div class="empty" id="empty">조건에 맞는 행사가 없어요.</div></div>
 </section>
-
-<section id="detailView" class="hidden">
-  <div class="detail">
-    <div class="detail-top"><button class="back" onclick="showHome()">← 행사 목록으로</button></div>
-    <div class="detail-hero" id="detailEmoji">🎉</div>
-    <div class="detail-content">
-      <span class="detail-tag" id="detailTag"></span>
-      <h1 id="detailName"></h1>
-      <div class="detail-info">
-        <div class="info"><b>📅 날짜</b><span id="detailDate"></span></div>
-        <div class="info"><b>🕐 시간</b><span id="detailTime"></span></div>
-        <div class="info"><b>📍 장소</b><span id="detailPlace"></span></div>
-        <div class="info"><b>💰 이용요금</b><span id="detailPrice"></span></div>
-      </div>
-      <div class="actions"><button class="action primary" onclick="alert('지도 기능은 실제 지도 API 연결 때 넣어요!')">🗺️ 지도 보기</button><button class="action" id="detailHeart" onclick="toggleDetailHeart()">♡ 찜하기</button></div>
-      <div class="detail-section"><h2>행사 소개</h2><p class="description" id="detailDescription"></p></div>
-      <div class="detail-section"><h2>💬 방문자 이야기 <span id="commentCount"></span></h2>
-        <div class="comment-box"><input id="commentInput" placeholder="이 행사에 대한 이야기를 남겨보세요"><button onclick="addComment()">등록</button></div>
-        <div class="comments" id="comments"></div>
-      </div>
-    </div>
-  </div>
-</section>
+<section id="detailView" class="detail"><button class="back" onclick="showList()">← 행사 목록</button><div class="detailphoto" id="dphoto">🎉</div><div class="dc"><span class="tag" id="dtag"></span><h1 id="dname"></h1><div class="infos"><div class="info"><b>📅 기간</b><span id="ddate"></span></div><div class="info"><b>📍 장소</b><span id="dplace"></span></div><div class="info"><b>🏠 주소</b><span id="daddr"></span></div><div class="info"><b>💰 요금</b><span id="dprice"></span></div></div><div class="actions"><button class="action primary" id="mapBtn">🗺️ 지도 보기</button><button class="action" onclick="alert('찜 기능은 다음 단계에서 연결해요!')">♡ 찜하기</button></div><div class="desc" id="ddesc"></div><div class="source" id="dsource"></div></div></section>
 </main>
-
-<nav><div class="nav-inner"><button class="active" onclick="showHome()"><b>🏠</b>홈</button><button onclick="showHome()"><b>📅</b>행사</button><button onclick="alert('찜 목록은 다음 단계에서 만들어요!')"><b>♡</b>찜</button><button onclick="alert('내정보는 다음 단계에서 만들어요!')"><b>👤</b>내정보</button></div></nav>
-</div>
-
+<nav><div><button onclick="showList()"><b>🏠</b>홈</button><button onclick="showList()"><b>📅</b>행사</button><button onclick="alert('찜 기능은 다음 단계!')"><b>♡</b>찜</button><button onclick="alert('내정보는 다음 단계!')"><b>👤</b>내정보</button></div></nav>
 <script>
-const regions=["전체","춘천","원주","강릉","속초","홍천","양양","평창","정선","동해","삼척","태백","철원","화천","양구","인제","고성","횡성","영월"];
-const events=[
-{name:"춘천 호수빛 문화축제",region:"춘천",type:"축제",date:"8/29 ~ 8/31",time:"10:00 ~ 20:00",place:"춘천 의암호 일원",price:"무료",emoji:"🎉",desc:"의암호 주변에서 열리는 가상의 문화축제입니다. 야외 공연과 체험 프로그램을 즐길 수 있는 행사로 구성해 보았습니다.",comments:["작년에 가봤는데 분위기 좋았어요!","주차 정보가 궁금해요."]},
-{name:"강릉 여름밤 야외공연",region:"강릉",type:"공연",date:"8/29",time:"19:00 ~ 21:00",place:"강릉아트센터",price:"무료",emoji:"🎭",desc:"여름밤에 즐기는 야외 공연을 가정한 샘플 행사입니다.",comments:["가족이랑 가기 좋을까요?"]},
-{name:"원주 시민예술 전시",region:"원주",type:"전시",date:"8/30 ~ 9/6",time:"10:00 ~ 18:00",place:"원주문화원",price:"무료",emoji:"🎨",desc:"지역 작가들의 작품을 소개하는 가상의 시민예술 전시입니다.",comments:[]},
-{name:"속초 바다 체험마당",region:"속초",type:"체험",date:"8/30",time:"11:00 ~ 17:00",place:"속초해변",price:"유료",emoji:"🌊",desc:"바다를 배경으로 여러 체험 프로그램을 즐기는 가상의 행사입니다.",comments:["아이랑 가도 재밌을 것 같아요."]},
-{name:"홍천 숲속 음악회",region:"홍천",type:"공연",date:"8/31",time:"18:00 ~ 20:00",place:"홍천 수타사",price:"무료",emoji:"🎵",desc:"숲속에서 음악을 감상하는 가상의 야외 음악회입니다.",comments:[]},
-{name:"평창 로컬푸드 축제",region:"평창",type:"축제",date:"9/1 ~ 9/3",time:"10:00 ~ 18:00",place:"평창읍 광장",price:"유료",emoji:"🍎",desc:"지역 농특산물과 먹거리를 즐기는 가상의 로컬푸드 축제입니다.",comments:[]}
+let data=[],region='전체',current=null;
+const regions=['전체','춘천','원주','강릉','속초','홍천','양양','평창','정선','동해','삼척','태백','철원','화천','양구','인제','고성','횡성','영월'];
+const fallback=[
+{name:'춘천 호수빛 문화축제',region:'춘천',type:'축제',date:'8/29 ~ 8/31',place:'춘천 의암호 일원',addr:'강원특별자치도 춘천시',price:'무료',img:'',desc:'실제 데이터 연결 전 화면 확인용 샘플 행사입니다.'},
+{name:'강릉 여름밤 야외공연',region:'강릉',type:'공연',date:'8/29',place:'강릉아트센터',addr:'강원특별자치도 강릉시',price:'무료',img:'',desc:'실제 데이터 연결 전 화면 확인용 샘플 행사입니다.'}
 ];
-let selected="전체", current=null;
-
-function initRegions(){document.getElementById("regions").innerHTML=regions.map(r=>`<button class="chip ${r===selected?'active':''}" onclick="selectRegion('${r}')">${r}</button>`).join("")}
-function selectRegion(r){selected=r;initRegions();render()}
-function render(){
- const q=document.getElementById("search").value.trim().toLowerCase(), type=document.getElementById("type").value, price=document.getElementById("price").value;
- const list=events.filter(e=>(selected==="전체"||e.region===selected)&&(type==="전체"||e.type===type)&&(price==="전체"||e.price===price)&&(!q||(e.name+e.place+e.region).toLowerCase().includes(q)));
- document.getElementById("resultCount").textContent=`${list.length}개`;document.getElementById("empty").style.display=list.length?"none":"block";
- document.getElementById("events").innerHTML=list.map(e=>`<article class="event" onclick="openEvent('${e.name}')"><div class="thumb">${e.emoji}</div><div class="event-body"><span class="tag">${e.type} · ${e.region}</span><h3>${e.name}</h3><div class="meta">📅 ${e.date}<br>📍 ${e.place}<br>💰 ${e.price}</div><div class="event-foot"><span class="date">상세 보기 →</span><button class="heart" onclick="event.stopPropagation();this.textContent=this.textContent==='♡'?'♥':'♡'">♡</button></div></div></article>`).join("");
-}
-function openEvent(name){
- current=events.find(e=>e.name===name); if(!current)return;
- document.getElementById("homeView").classList.add("hidden");document.getElementById("detailView").classList.remove("hidden");
- document.getElementById("detailEmoji").textContent=current.emoji;document.getElementById("detailTag").textContent=current.type+" · "+current.region;
- document.getElementById("detailName").textContent=current.name;document.getElementById("detailDate").textContent=current.date;document.getElementById("detailTime").textContent=current.time;
- document.getElementById("detailPlace").textContent=current.place;document.getElementById("detailPrice").textContent=current.price;document.getElementById("detailDescription").textContent=current.desc;
- document.getElementById("detailHeart").textContent="♡ 찜하기";renderComments();window.scrollTo({top:0,behavior:"smooth"});
-}
-function showHome(){document.getElementById("detailView").classList.add("hidden");document.getElementById("homeView").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"})}
-function toggleDetailHeart(){const b=document.getElementById("detailHeart");b.textContent=b.textContent.startsWith("♡")?"♥ 찜 완료":"♡ 찜하기"}
-function renderComments(){document.getElementById("commentCount").textContent=`${current.comments.length}`;document.getElementById("comments").innerHTML=current.comments.map((c,i)=>`<div class="comment"><strong>방문자 ${i+1}</strong><p>${c}</p></div>`).join("")||`<p style="color:#888">아직 댓글이 없어요. 첫 번째 이야기를 남겨보세요!</p>`}
-function addComment(){const input=document.getElementById("commentInput"),text=input.value.trim();if(!text){alert("댓글을 입력해주세요.");return}current.comments.unshift(text);input.value="";renderComments()}
-initRegions();render();
+fetch('events.json?'+Date.now()).then(r=>r.ok?r.json():[]).then(x=>{data=x.length?x:fallback;init();}).catch(()=>{data=fallback;init()});
+function init(){document.getElementById('regions').innerHTML=regions.map(r=>`<button class="chip ${r===region?'active':''}" onclick="setRegion('${r}')">${r}</button>`).join('');render()}
+function setRegion(r){region=r;init()}
+function render(){let q=document.getElementById('q').value.toLowerCase(),t=document.getElementById('type').value,m=document.getElementById('month').value;
+let list=data.filter(e=>(region==='전체'||e.region===region)&&(t==='전체'||e.type===t)&&(!q||(e.name+e.place+e.addr).toLowerCase().includes(q))&&(m==='all'||(e.startDate||'').startsWith(m)||(e.endDate||'').startsWith(m)));
+document.getElementById('count').textContent=list.length+'개';document.getElementById('empty').style.display=list.length?'none':'block';
+document.getElementById('grid').innerHTML=list.map((e,i)=>`<article class="card" onclick="openDetail(${data.indexOf(e)})"><div class="photo">${e.img?`<img src="${e.img}" loading="lazy">`:'🎉'}</div><div class="body"><span class="tag">${e.type} · ${e.region}</span><h3>${esc(e.name)}</h3><div class="meta">📅 ${esc(e.date)}<br>📍 ${esc(e.place)}<br>💰 ${esc(e.price||'정보 없음')}</div></div></article>`).join('')}
+function openDetail(i){current=data[i];document.getElementById('listView').style.display='none';document.getElementById('detailView').style.display='block';let p=document.getElementById('dphoto');p.innerHTML=current.img?`<img src="${current.img}">`:'🎉';document.getElementById('dtag').textContent=current.type+' · '+current.region;document.getElementById('dname').textContent=current.name;document.getElementById('ddate').textContent=current.date;document.getElementById('dplace').textContent=current.place||'정보 없음';document.getElementById('daddr').textContent=current.addr||'정보 없음';document.getElementById('dprice').textContent=current.price||'정보 없음';document.getElementById('ddesc').textContent=current.desc||'행사 상세 정보가 제공되지 않았습니다.';document.getElementById('dsource').textContent='한국관광공사 관광정보 기반 · 데이터는 정기적으로 갱신됩니다.';document.getElementById('mapBtn').onclick=()=>window.open('https://map.naver.com/p/search/'+encodeURIComponent(current.addr||current.place),'_blank');scrollTo(0,0)}
+function showList(){document.getElementById('detailView').style.display='none';document.getElementById('listView').style.display='block';scrollTo(0,0)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 </script>
-</body>
-</html>
+</body></html>
