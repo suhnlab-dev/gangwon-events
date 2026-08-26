@@ -1,0 +1,213 @@
+name: Update Gangwon events
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 18 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch KTO events
+        env:
+          KTO_API_KEY: ${{ secrets.KTO_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          import json
+          import urllib.parse
+          import urllib.request
+          import xml.etree.ElementTree as ET
+          from datetime import datetime, timedelta
+
+          key = os.environ["KTO_API_KEY"]
+
+          url = "https://apis.data.go.kr/B551011/KorService2/searchFestival2"
+
+          start = datetime.now().strftime("%Y%m%d")
+          end = (datetime.now() + timedelta(days=365)).strftime("%Y%m%d")
+
+          params = {
+              "serviceKey": key,
+              "MobileOS": "ETC",
+              "MobileApp": "GangwonEvents",
+              "_type": "json",
+              "numOfRows": "1000",
+              "pageNo": "1",
+              "areaCode": "32",
+              "eventStartDate": start,
+              "eventEndDate": end
+          }
+
+          request_url = url + "?" + urllib.parse.urlencode(params)
+
+          try:
+              raw = urllib.request.urlopen(
+                  request_url,
+                  timeout=30
+              ).read()
+
+              try:
+                  obj = json.loads(raw.decode("utf-8"))
+
+                  items = (
+                      obj.get("response", {})
+                         .get("body", {})
+                         .get("items", {})
+                         .get("item", [])
+                  )
+
+                  if isinstance(items, dict):
+                      items = [items]
+
+              except Exception:
+                  root = ET.fromstring(raw)
+                  items = []
+
+                  for item in root.findall(".//item"):
+                      items.append({
+                          child.tag: child.text or ""
+                          for child in item
+                      })
+
+          except Exception as e:
+              print("API fetch failed:", e)
+              items = []
+
+          def pick(item, *names):
+              for name in names:
+                  if item.get(name):
+                      return item.get(name)
+              return ""
+
+          events = []
+
+          for item in items:
+
+              start_date = pick(item, "eventstartdate")
+              end_date = pick(item, "eventenddate")
+
+              if not start_date:
+                  continue
+
+              address = pick(item, "addr1")
+
+              region = ""
+
+              if address:
+                  address = address.replace(
+                      "강원특별자치도 ",
+                      ""
+                  )
+                  region = address.split()[0]
+
+              event = {
+                  "name": pick(item, "title"),
+                  "region": region,
+                  "type": "축제",
+                  "startDate": start_date,
+                  "endDate": end_date,
+
+                  "date":
+                      f"{start_date[:4]}."
+                      f"{start_date[4:6]}."
+                      f"{start_date[6:]}"
+                      +
+                      (
+                          f" ~ {end_date[:4]}."
+                          f"{end_date[4:6]}."
+                          f"{end_date[6:]}"
+                          if end_date and end_date != start_date
+                          else ""
+                      ),
+
+                  "place": pick(item, "eventplace"),
+                  "addr": address,
+
+                  "price": pick(
+                      item,
+                      "usetimefestival",
+                      "usetime"
+                  ),
+
+                  "img": pick(
+                      item,
+                      "firstimage",
+                      "firstimage2"
+                  ),
+
+                  "desc": pick(
+                      item,
+                      "overview"
+                  ),
+
+                  "contentId": pick(
+                      item,
+                      "contentid"
+                  )
+              }
+
+              events.append(event)
+
+          # 중복 제거
+          seen = set()
+          clean = []
+
+          for event in events:
+
+              key = (
+                  event["name"],
+                  event["startDate"],
+                  event["place"]
+              )
+
+              if key not in seen:
+                  seen.add(key)
+                  clean.append(event)
+
+          clean.sort(
+              key=lambda x: (
+                  x["startDate"],
+                  x["name"]
+              )
+          )
+
+          with open(
+              "events.json",
+              "w",
+              encoding="utf-8"
+          ) as file:
+
+              json.dump(
+                  clean,
+                  file,
+                  ensure_ascii=False,
+                  indent=2
+              )
+
+          print(
+              "강원 행사 수:",
+              len(clean)
+          )
+
+          PY
+
+      - name: Commit updated events
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add events.json
+
+          git diff --cached --quiet || \
+            git commit -m "Update Gangwon events"
+
+          git push
