@@ -25,54 +25,51 @@ jobs:
           import json
           import urllib.request
           import urllib.parse
-          from datetime import datetime, timedelta
+          import time
 
           key = os.environ["KTO_API_KEY"]
 
           if not key:
               raise RuntimeError("KTO_API_KEY Secret이 없습니다.")
 
-          base_url = "https://apis.data.go.kr/B551011/KorService2/searchFestival2"
+          BASE_URL = "https://apis.data.go.kr/B551011/KorService2/searchFestival2"
 
-          # 우리가 원하는 최종 범위
-          min_date = "20260101"
-          max_date = (
-              datetime.now() + timedelta(days=365)
-          ).strftime("%Y%m%d")
-
-          print("최종 데이터 범위:", min_date, "~", max_date)
+          # 조회 기간을 여러 구간으로 분할
+          periods = [
+              ("20260101", "20260630"),
+              ("20260701", "20261231"),
+              ("20270101", "20270630"),
+              ("20270701", "20270831"),
+          ]
 
           all_items = []
 
-          # 한 번에 100개씩 받아오기
-          num_of_rows = 100
-          page = 1
-
-          while True:
+          def fetch_period(start_date, end_date):
 
               params = {
                   "MobileOS": "ETC",
                   "MobileApp": "GangwonEvents",
                   "_type": "json",
-                  "numOfRows": str(num_of_rows),
-                  "pageNo": str(page),
+                  "numOfRows": "1000",
+                  "pageNo": "1",
                   "areaCode": "32",
-                  "eventStartDate": min_date
+                  "eventStartDate": start_date,
+                  "eventEndDate": end_date
               }
 
               query = urllib.parse.urlencode(params)
 
               if "%" in key:
-                  request_url = (
-                      base_url
+                  url = (
+                      BASE_URL
                       + "?serviceKey="
                       + key
                       + "&"
                       + query
                   )
               else:
-                  request_url = (
-                      base_url
+                  url = (
+                      BASE_URL
                       + "?"
                       + urllib.parse.urlencode(
                           {"serviceKey": key}
@@ -81,108 +78,161 @@ jobs:
                       + query
                   )
 
-              print("페이지 요청:", page)
+              for attempt in range(1, 4):
 
-              request = urllib.request.Request(
-                  request_url,
-                  headers={
-                      "User-Agent": "Mozilla/5.0"
-                  }
+                  try:
+                      print(
+                          f"요청 {start_date} ~ {end_date}"
+                          f" / 시도 {attempt}/3"
+                      )
+
+                      request = urllib.request.Request(
+                          url,
+                          headers={
+                              "User-Agent": "Mozilla/5.0"
+                          }
+                      )
+
+                      response = urllib.request.urlopen(
+                          request,
+                          timeout=90
+                      )
+
+                      raw = response.read()
+
+                      text = raw.decode(
+                          "utf-8-sig"
+                      )
+
+                      data = json.loads(text)
+
+                      response_data = data.get(
+                          "response",
+                          {}
+                      )
+
+                      header = response_data.get(
+                          "header",
+                          {}
+                      )
+
+                      print(
+                          "결과:",
+                          header.get("resultCode"),
+                          header.get("resultMsg")
+                      )
+
+                      if header.get(
+                          "resultCode"
+                      ) != "0000":
+
+                          raise RuntimeError(
+                              "API 오류: "
+                              + str(header)
+                          )
+
+                      body = response_data.get(
+                          "body",
+                          {}
+                      )
+
+                      items_container = body.get(
+                          "items",
+                          {}
+                      )
+
+                      if isinstance(
+                          items_container,
+                          dict
+                      ):
+                          items = items_container.get(
+                              "item",
+                              []
+                          )
+                      else:
+                          items = []
+
+                      if isinstance(items, dict):
+                          items = [items]
+
+                      if not isinstance(items, list):
+                          items = []
+
+                      items = [
+                          x for x in items
+                          if isinstance(x, dict)
+                      ]
+
+                      print(
+                          "가져온 행사:",
+                          len(items)
+                      )
+
+                      return items
+
+                  except Exception as e:
+
+                      print(
+                          "요청 실패:",
+                          repr(e)
+                      )
+
+                      if attempt < 3:
+                          time.sleep(5)
+
+              raise RuntimeError(
+                  f"{start_date} ~ {end_date} "
+                  "API 요청 3회 실패"
               )
 
-              response = urllib.request.urlopen(
-                  request,
-                  timeout=60
-              )
+          # 기간별 수집
+          for start_date, end_date in periods:
 
-              raw = response.read()
-              text = raw.decode("utf-8-sig")
-              data = json.loads(text)
-
-              response_data = data.get("response", {})
-              header = response_data.get("header", {})
-
-              print(
-                  "API:",
-                  header.get("resultCode"),
-                  header.get("resultMsg")
-              )
-
-              if header.get("resultCode") != "0000":
-                  raise RuntimeError(
-                      "API 오류: " + str(header)
-                  )
-
-              body = response_data.get("body", {})
-
-              total_count = int(
-                  body.get("totalCount") or 0
-              )
-
-              items_container = body.get(
-                  "items",
-                  {}
-              )
-
-              if isinstance(
-                  items_container,
-                  dict
-              ):
-                  items = items_container.get(
-                      "item",
-                      []
-                  )
-              else:
-                  items = []
-
-              if isinstance(items, dict):
-                  items = [items]
-
-              if not isinstance(items, list):
-                  items = []
-
-              items = [
-                  item
-                  for item in items
-                  if isinstance(item, dict)
-              ]
-
-              print(
-                  "페이지 행사:",
-                  len(items),
-                  "/ 전체:",
-                  total_count
+              items = fetch_period(
+                  start_date,
+                  end_date
               )
 
               all_items.extend(items)
 
-              # 마지막 페이지
-              if not items:
-                  break
-
-              if len(all_items) >= total_count:
-                  break
-
-              page += 1
-
-              # 개발계정 트래픽 보호
-              if page > 10:
-                  print(
-                      "10페이지까지만 가져옵니다."
-                  )
-                  break
+              time.sleep(1)
 
           print(
-              "API에서 받은 전체 행사:",
+              "전체 원본 행사:",
               len(all_items)
           )
 
           def pick(item, *names):
+
               for name in names:
+
                   value = item.get(name)
+
                   if value:
                       return value
+
               return ""
+
+          regions = [
+              "춘천",
+              "원주",
+              "강릉",
+              "동해",
+              "태백",
+              "속초",
+              "삼척",
+              "홍천",
+              "횡성",
+              "영월",
+              "평창",
+              "정선",
+              "철원",
+              "화천",
+              "양구",
+              "인제",
+              "고성",
+              "양양"
+          ]
 
           events = []
 
@@ -201,50 +251,27 @@ jobs:
               if not start_date:
                   continue
 
-              # 우리가 원하는 기간으로 직접 필터
-              if start_date < min_date:
-                  continue
-
-              if start_date > max_date:
-                  continue
-
               address = pick(
                   item,
                   "addr1"
               )
 
-              clean_address = address.replace(
-                  "강원특별자치도 ",
-                  ""
-              ).replace(
-                  "강원도 ",
-                  ""
+              clean_address = (
+                  address
+                  .replace(
+                      "강원특별자치도 ",
+                      ""
+                  )
+                  .replace(
+                      "강원도 ",
+                      ""
+                  )
               )
 
               region = ""
 
-              regions = [
-                  "춘천",
-                  "원주",
-                  "강릉",
-                  "동해",
-                  "태백",
-                  "속초",
-                  "삼척",
-                  "홍천",
-                  "횡성",
-                  "영월",
-                  "평창",
-                  "정선",
-                  "철원",
-                  "화천",
-                  "양구",
-                  "인제",
-                  "고성",
-                  "양양"
-              ]
-
               for r in regions:
+
                   if (
                       clean_address.startswith(r)
                       or r + "시" in clean_address
@@ -325,16 +352,16 @@ jobs:
 
           for event in events:
 
-              key = (
+              unique_key = (
                   event["name"],
                   event["startDate"],
                   event["place"]
               )
 
-              if key in seen:
+              if unique_key in seen:
                   continue
 
-              seen.add(key)
+              seen.add(unique_key)
               clean.append(event)
 
           clean.sort(
@@ -343,6 +370,19 @@ jobs:
                   x["name"]
               )
           )
+
+          print(
+              "최종 저장 행사:",
+              len(clean)
+          )
+
+          # 데이터가 아예 없으면 기존 파일 보호
+          if len(clean) == 0:
+
+              raise RuntimeError(
+                  "새 행사 데이터가 0개라 "
+                  "기존 events.json을 보호합니다."
+              )
 
           with open(
               "events.json",
@@ -355,16 +395,6 @@ jobs:
                   f,
                   ensure_ascii=False,
                   indent=2
-              )
-
-          print(
-              "최종 저장 행사:",
-              len(clean)
-          )
-
-          if len(clean) == 0:
-              raise RuntimeError(
-                  "최종 행사 데이터가 0개입니다."
               )
 
           PY
