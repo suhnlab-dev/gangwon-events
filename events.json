@@ -1,7 +1,7 @@
 [
   {
     "name": "병오년 해맞이 행사",
-    "region": "강릉시",
+    "region": "강릉",
     "type": "축제",
     "startDate": "20251231",
     "endDate": "20260101",
@@ -11,11 +11,12 @@
     "price": "",
     "img": "http://tong.visitkorea.or.kr/cms/resource/40/3588540_image2_1.jpg",
     "desc": "",
+    "phone": "033-640-5130",
     "contentId": "674023"
   },
   {
     "name": "홍천강 꽁꽁축제",
-    "region": "홍천군",
+    "region": "홍천",
     "type": "축제",
     "startDate": "20260109",
     "endDate": "20260125",
@@ -25,6 +26,7 @@
     "price": "",
     "img": "http://tong.visitkorea.or.kr/cms/resource/12/3580712_image2_1.JPG",
     "desc": "",
+    "phone": "033-439-5800",
     "contentId": "1769697"
   }
 ]
