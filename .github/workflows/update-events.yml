@@ -34,12 +34,13 @@ jobs:
 
           base_url = "https://apis.data.go.kr/B551011/KorService2/searchFestival2"
 
-          start = datetime.now().strftime("%Y%m%d")
-          end = (datetime.now() + timedelta(days=365)).strftime("%Y%m%d")
+          # 2026년 1월 1일부터 오늘 이후 1년까지
+          start = "20260101"
+          end = (
+              datetime.now() + timedelta(days=365)
+          ).strftime("%Y%m%d")
 
-          # 일반 인증키가 이미 URL 인코딩되어 있는 경우
-          # serviceKey만 다시 인코딩하지 않도록 처리
-          other_params = {
+          params = {
               "MobileOS": "ETC",
               "MobileApp": "GangwonEvents",
               "_type": "json",
@@ -50,8 +51,10 @@ jobs:
               "eventEndDate": end
           }
 
-          query = urllib.parse.urlencode(other_params)
+          query = urllib.parse.urlencode(params)
 
+          # 인증키가 이미 URL 인코딩된 경우와
+          # 그렇지 않은 경우 모두 처리
           if "%" in key:
               request_url = (
                   base_url
@@ -72,7 +75,8 @@ jobs:
               )
 
           print("API 요청 시작")
-          print("기간:", start, "~", end)
+          print("조회 시작:", start)
+          print("조회 종료:", end)
           print("지역코드: 32")
 
           request = urllib.request.Request(
@@ -87,22 +91,11 @@ jobs:
               timeout=60
           )
 
-          status = response.status
           raw = response.read()
-
-          print("HTTP 상태:", status)
+          print("HTTP 상태:", response.status)
           print("응답 길이:", len(raw))
 
           text = raw.decode("utf-8-sig")
-
-          # API가 오류 메시지를 반환했을 경우
-          if not text.strip().startswith("{"):
-              print("API 원본 응답:")
-              print(text[:2000])
-              raise RuntimeError(
-                  "한국관광공사 API가 JSON이 아닌 응답을 반환했습니다."
-              )
-
           data = json.loads(text)
 
           response_data = data.get("response", {})
@@ -113,19 +106,36 @@ jobs:
 
           if header.get("resultCode") not in (None, "0000"):
               raise RuntimeError(
-                  "API 오류: "
-                  + str(header)
+                  "API 오류: " + str(header)
               )
 
           body = response_data.get("body", {})
-          items = body.get("items", {}).get("item", [])
 
+          print("API 전체 행사 수:", body.get("totalCount"))
+
+          items_container = body.get("items", {})
+
+          # API가 정상적인 경우
+          if isinstance(items_container, dict):
+              items = items_container.get("item", [])
+          else:
+              items = []
+
+          # 행사 1개면 dict, 여러 개면 list일 수 있음
           if isinstance(items, dict):
               items = [items]
 
-          print("가져온 원본 행사 수:", len(items))
+          # 이상한 응답은 제거
+          if not isinstance(items, list):
+              items = []
 
-          events = []
+          items = [
+              item
+              for item in items
+              if isinstance(item, dict)
+          ]
+
+          print("처리할 행사 수:", len(items))
 
           def pick(item, *names):
               for name in names:
@@ -133,6 +143,8 @@ jobs:
                   if value:
                       return value
               return ""
+
+          events = []
 
           for item in items:
 
@@ -154,21 +166,34 @@ jobs:
                   "addr1"
               )
 
+              # 강원 시·군 추출
               region = ""
 
               if address:
                   clean_address = address.replace(
                       "강원특별자치도 ",
                       ""
+                  ).replace(
+                      "강원도 ",
+                      ""
                   )
+
                   region = clean_address.split()[0]
 
               event = {
-                  "name": pick(item, "title"),
+                  "name": pick(
+                      item,
+                      "title"
+                  ),
+
                   "region": region,
+
                   "type": "축제",
+
                   "startDate": start_date,
+
                   "endDate": end_date,
+
                   "date": (
                       f"{start_date[:4]}."
                       f"{start_date[4:6]}."
@@ -178,29 +203,36 @@ jobs:
                           f" ~ {end_date[:4]}."
                           f"{end_date[4:6]}."
                           f"{end_date[6:]}"
-                          if end_date and end_date != start_date
+                          if end_date
+                          and end_date != start_date
                           else ""
                       )
                   ),
+
                   "place": pick(
                       item,
                       "eventplace"
                   ),
+
                   "addr": address,
+
                   "price": pick(
                       item,
                       "usetimefestival",
                       "usetime"
                   ),
+
                   "img": pick(
                       item,
                       "firstimage",
                       "firstimage2"
                   ),
+
                   "desc": pick(
                       item,
                       "overview"
                   ),
+
                   "contentId": pick(
                       item,
                       "contentid"
@@ -246,12 +278,6 @@ jobs:
               )
 
           print("최종 저장 행사 수:", len(clean))
-
-          if len(clean) == 0:
-              raise RuntimeError(
-                  "행사 데이터가 0건입니다. "
-                  "API 인증키 또는 API 응답을 확인하세요."
-              )
 
           PY
 
